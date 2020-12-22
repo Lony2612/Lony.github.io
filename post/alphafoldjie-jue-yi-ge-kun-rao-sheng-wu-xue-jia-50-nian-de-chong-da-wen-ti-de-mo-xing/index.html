@@ -1,105 +1,96 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://lony2612.github.io</id>
-    <title>Gridea</title>
-    <updated>2020-12-22T02:16:40.420Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://lony2612.github.io"/>
-    <link rel="self" href="https://lony2612.github.io/atom.xml"/>
-    <subtitle>温故而知新</subtitle>
-    <logo>https://lony2612.github.io/images/avatar.png</logo>
-    <icon>https://lony2612.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2020, Gridea</rights>
-    <entry>
-        <title type="html"><![CDATA[综述：深度学习在蛋白质结构预测中的最新进展]]></title>
-        <id>https://lony2612.github.io/post/zong-shu-shen-du-xue-xi-zai-dan-bai-zhi-jie-gou-yu-ce-zhong-de-zui-xin-jin-zhan/</id>
-        <link href="https://lony2612.github.io/post/zong-shu-shen-du-xue-xi-zai-dan-bai-zhi-jie-gou-yu-ce-zhong-de-zui-xin-jin-zhan/">
-        </link>
-        <updated>2020-12-22T02:13:13.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="1-问题引入">1. 问题引入</h1>
-<ul>
-<li>
-<p>长期以来，结构生物信息学领域一直使用机器学习方法，尤其是人工神经网络（NN）模型。PHD，PSIPRED和JPred是当今仍广泛使用的早期NN方法的杰出代表。</p>
-</li>
-<li>
-<p>DNN对CASP产生重大影响的第一个应用领域是残基-残基接触预测，这在CASP12和13中的准确性上有特别明显的提高。在CASP13中，一些小组将这些技术进一步扩展到了原子间距离的预测，在某些情况下可以将其直接用于精确的三级结构生成。</p>
-</li>
-<li>
-<p>文章贡献</p>
-<ul>
-<li>为CASP参与者和观察者提供对最重要的、已在最近的CASP实验中成功应用于核心问题领域的DNN体系结构工作的理解。</li>
-<li>讨论这些模型相对于在各个领域中传统使用的模型可能具有的优势。</li>
-<li>对这些模型为何以及如何工作、它们的局限性、潜在的缺陷以及正确的应用进行一些讨论。（所有讨论将仅限于监督学习模型，因为迄今为止在CASP中使用的性能最高的DNN模型就是这种类型）</li>
-</ul>
-</li>
-</ul>
-<h1 id="2-蛋白质结构预测中使用的卷积神经网络">2. 蛋白质结构预测中使用的卷积神经网络</h1>
-<ul>
-<li>
-<p>感受野<br>
-这仅是指可以随时看到输入图像的区域（或更一般地说，输入特征集）。具体而言，感受野是用于计算单个输出值的输入的空间范围，通常是针对网络中给定卷积层（最常见的是最后一个）中的单个神经元计算的。由单层3×3卷积核组成的网络中的输出神经元将具有3×3的感受野，因为网络对每个输出像素进行的最终计算仅考虑输入中的中心像素及其直接邻居(图 1)。但是，将模型与连续的卷积层组合在一起，可以增加感受野；即每个输入像素周围的区域，可以在计算最终层的输出时将其包括在内(参见图2A)。需要注意的是，感受野的大小受输入大小的限制；可以通过添加更多的卷积层使得CNN具有较大的感受野，但是如果CNN仅在尺寸为32×32的输入上运行，则无论层数如何——即使其“理论”感受野可能更大，实际感受野只能增长到最大尺寸32×32。实际上，最大感受野必须足够大以捕获输入数据中的相关结构。<br>
-<img src="https://img-blog.csdnimg.cn/20201222092709645.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xvbnkwMjIz,size_16,color_FFFFFF,t_70" alt="将2D卷积核（橙色）应用于输入层（蓝色）以获得输出层（绿色）的值。 输出值（在此示例中为-8）是卷积核权重与输入中相应元素的逐点乘积之和(在此示例中，偏置为零，并且不使用非线性激活函数)。同一组过滤器权重用于在输入上过滤器的每个位置生成输出值" loading="lazy"></p>
-</li>
-<li>
-<p>扩张卷积也可以用来以更少的层数来增加感受野。</p>
-<p>在扩张卷积中，通过在每个像素之间包含空格来拉伸每个卷积核(图2B)。扩张率为2的3×3卷积核实际上将与5×5卷积核覆盖相同的区域，但是仅具有9个可学习的参数，而不是25个(图2B)。不利的一面是，扩张卷积核只能采样25个像素中的9个，因此会有间隙。但是，这些间隙可以由后来的扩张卷积层填补，因此由扩张卷积层构成的网络可以覆盖任意大的感受野，而无需成倍地增加可学习的参数。 在CASP13中，扩张卷积用于许多性能最高的CNN模型中。<br>
-<img src="https://img-blog.csdnimg.cn/20201222093102201.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xvbnkwMjIz,size_16,color_FFFFFF,t_70" alt="A，添加了卷积层后，显示了2D CNN感受野的增长示意图。6×6网格表示三个连续卷积层的输出，卷积核大小为3×3，信息从第1层流到第3层。第3层（黄色单元）的单个输出是使用3×3窗口对来自第2层的输入进行处理获得的 。第2层中的这9个单元格中的每一个都使用第1层的3×3窗口。这些窗口重叠，并且第2层中高亮显示的单元格所使用的单元格的集合并被标记在第1层（5×5网格）。因此，从第3层中每个输出像元的角度来看，接收场在第1层中是5×5个像素。B，展示了一个单一扩展卷积的卷积核，其中卷积核大小为3×3和扩张率为2。尽管仅具有九个可调整的权重，但该层的感受野为5×5。 栈式扩张卷积层可以使感受野通的大小过线性增加的参数数量呈指数增长。 相反，使用传统卷积层时，感受野和可调参数的数量都线性增长，如图A所示" loading="lazy"></p>
-</li>
-<li>
-<p>CNN模型能够接受图像类型的输入并产生图像类型的输出。</p>
-<p>该类型网络通过全卷积网络（FCN；不要与全连接网络相混淆）实现，全部由一堆卷积层组成，一直到输出为止，而没有改变图像分辨率或丢失图像结构的最大池化层或全连接层。因此，FCN的特性是它们可以设置产生与输入尺寸完全相同的输出图像。一个典型应用是获取图像并生成一个与其大小相同的输出图像，该输出图像突出显示输入图像中的特定对象，这被称为图像分割。在结构生物信息学中，这种类型的体系结构已被许多小组用于联系预测中，其中网络的输入是一个或多个特征，取决于目标序列的（平方）长度 （例如氨基酸协方差矩阵），并产生相同形状的输出（接触图）。</p>
-</li>
-<li>
-<p>用于距离预测的CNN</p>
-<p>由于残基协方差矩阵与接触图之间的对应关系， 将其视为类似于图像的输入，以得出映射是很自然的。CNN非常适合此类预测问题，因为卷积层的关键思想是识别局部模式，而不管其在输入中的空间位置如何。举例来说，将这个想法带入接触预测领域，将卷积过滤器应用于氨基酸协方差矩阵，可以使模型检测由任意数量的残基分隔的局部序列基序之间的相互作用，与观察到的结构模式非常吻合 （例如，可以适应可变长度的循环甚至整个域插入，而无需更改模型）。<br>
-乍看之下，CNN模型（其中关键功能单元仅设计为使用数据的局部子集）可以胜过全局模型（在该模型中同时考虑所有残基协方差数据），这一事实似乎令人惊讶。另一方面，栈式连续卷积层以增加模型的总体感受野的能力在理论上使模型可以在预测单个接触时根据需要使用目标蛋白的尽可能多的协变数据。在最近的工作中，我们创建了具有不同大小的感受野的CNN模型，以评估是否有必要对协变数据进行完整的全局查看，以便在预测接触时获得高精度。我们发现，增加网络的感受野可以提高精度，这是可以预期的，但是只有在最大感受野大小达到15个残基左右时，才能实现显着的增益。感受野大小的进一步增加（最高达估计的最大值49）导致平均精度几乎没有提高。</p>
-</li>
-</ul>
-<h1 id="3-为什么深度学习有用">3. 为什么深度学习有用</h1>
-<p>最后，该文章对于基于DNN的模型能够有效解决各种问题的原因进行分析；针对一些潜在的缺陷提出了展望。</p>
-<ul>
-<li>
-<p>知识的层次表示<br>
-当DNN中的每个层组成前一层的输出时，可以在不同的抽象级别上学习数据的特征，从而使更深的模型能够识别日益复杂的模式。这种学习层次特征的能力在各种结构性生物信息学任务中很有用，因为生物学数据中的信息通常确实存在于层次结构的各个级别。例如，在蛋白质中，信息存在于各个残基，序列基序，片段，二级和超二级结构，域等的层次水平。</p>
-</li>
-<li>
-<p>深度学习作为邻域密度估计方法<br>
-过拟合使得模型泛化性能降低；欠拟合使得模型精度下降</p>
-</li>
-<li>
-<p>对缺失或带噪声的输入的鲁棒性</p>
-</li>
-<li>
-<p>潜在缺陷</p>
-<ul>
-<li>过拟合与泛化性能<br>
-与诸如文本或图像之类的应用领域相比，生物信息学数据库通常具有可用于训练预测模型的数据点少得多。由于DNN模型经常具有数百万个可调整的参数，因此，对于足够少的训练示例，DNN可能容易被过度训练并记忆训练集，如上所述。过度训练的模型可能面临的最大问题是，在将模型应用于新问题实例之前，我们可能会高估它们的性能。</li>
-<li>如何解决<br>
-确保用于基准测试的测试集中没有与训练集中的任何蛋白质具有相似3D结构或折叠的蛋白质。</li>
-</ul>
-</li>
-</ul>
-<h1 id="4-展望">4. 展望</h1>
-<ul>
-<li>深度学习显然正在席卷生物信息学。如本文所述，这是由于深度学习模型能够考虑数据中不同层次的结构，处理嘈杂的数据，无需特征工程即可获取原始特征并明智地插值以对训练中未使用的数据做出合理的预测。</li>
-<li>由于以下几个原因，这种趋势可能会持续至少几年：
-<ul>
-<li>硬件，架构和算法的不断改进；</li>
-<li>不断增加的实验数据收集；</li>
-<li>机器学习和生物信息学界之间越来越多的交叉。</li>
-</ul>
-</li>
-<li>随着生物信息学的深度学习进入更成熟的阶段，严格的基准测试和评估在已发表的文献中变得越来越普遍是至关重要的。当然，生物信息学的最终目的不仅在于预测任务的准确性，还在于对工作中潜在的生物学过程的理解。随着对NN的可解释性的研究的改进，对生物信息学中成功的网络进行研究以了解哪些特征和信号有用是很重要的。这样的理解甚至可以用来帮助网络本身变得更加健壮和准确。</li>
-</ul>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[AlphaFold:解决一个困扰生物学家50年的重大问题的模型]]></title>
-        <id>https://lony2612.github.io/post/alphafoldjie-jue-yi-ge-kun-rao-sheng-wu-xue-jia-50-nian-de-chong-da-wen-ti-de-mo-xing/</id>
-        <link href="https://lony2612.github.io/post/alphafoldjie-jue-yi-ge-kun-rao-sheng-wu-xue-jia-50-nian-de-chong-da-wen-ti-de-mo-xing/">
-        </link>
-        <updated>2020-12-10T11:48:27.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="导论">导论</h1>
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AlphaFold:解决一个困扰生物学家50年的重大问题的模型 | Gridea</title>
+<link rel="shortcut icon" href="https://lony2612.github.io/favicon.ico?v=1608603394821">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://lony2612.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="AlphaFold:解决一个困扰生物学家50年的重大问题的模型 | Gridea - Atom Feed" href="https://lony2612.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="导论
+    “近50年来，我们一直坚持这个问题——蛋白质如何折叠。 看到DeepMind为这个问题提供解决方案，他已经在这个问题上工作了很长时间，并且经过了无数次停滞后，不知道我们是否会到达那里，这是一个非常特殊的时刻。”
+——John ..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://lony2612.github.io">
+  <img class="avatar" src="https://lony2612.github.io/images/avatar.png?v=1608603394821" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              AlphaFold:解决一个困扰生物学家50年的重大问题的模型
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-12-10
+              </span>
+              <span>
+                11 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h1 id="导论">导论</h1>
 <p>    <strong>“近50年来，我们一直坚持这个问题——蛋白质如何折叠。 看到DeepMind为这个问题提供解决方案，他已经在这个问题上工作了很长时间，并且经过了无数次停滞后，不知道我们是否会到达那里，这是一个非常特殊的时刻。”</strong></p>
 <p align="right">——John Moult教授，CASP的联合创始人兼主席，马里兰大学</p>
 <p>    蛋白质对于生命至关重要，几乎可以支持其所有功能。蛋白质是由氨基酸链组成的大型复杂分子，其作用很大程度上取决于其独特的3D结构。解决蛋白质折叠成什么形状被称为“蛋白质折叠问题”，这在过去的50年中一直是生物学上的巨大挑战。在一项重大的科学进步中，两年一次的蛋白质结构预测关键评估（CASP）的组织者认为，DeepMind最新的AI系统AlphaFold版本<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>可以解决这一挑战。这一突破表明，人工智能可以对科学发现产生影响，并有潜力极大地加速解释和塑造我们世界的一些最基本领域的进步。</p>
@@ -142,38 +133,89 @@
 </li>
 </ol>
 </section>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Hello Gridea]]></title>
-        <id>https://lony2612.github.io/post/hello-gridea/</id>
-        <link href="https://lony2612.github.io/post/hello-gridea/">
-        </link>
-        <updated>2018-12-11T16:00:00.000Z</updated>
-        <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
-<!-- more -->
-<p><a href="https://github.com/getgridea/gridea">Github</a><br>
-<a href="https://gridea.dev/">Gridea 主页</a><br>
-<a href="http://fehey.com/">示例网站</a></p>
-<h2 id="特性">特性👇</h2>
-<p>📝  你可以使用最酷的 <strong>Markdown</strong> 语法，进行快速创作</p>
-<p>🌉  你可以给文章配上精美的封面图和在文章任意位置插入图片</p>
-<p>🏷️  你可以对文章进行标签分组</p>
-<p>📋  你可以自定义菜单，甚至可以创建外部链接菜单</p>
-<p>💻  你可以在 <strong>Windows</strong>，<strong>MacOS</strong> 或 <strong>Linux</strong> 设备上使用此客户端</p>
-<p>🌎  你可以使用 <strong>𝖦𝗂𝗍𝗁𝗎𝖻 𝖯𝖺𝗀𝖾𝗌</strong> 或 <strong>Coding Pages</strong> 向世界展示，未来将支持更多平台</p>
-<p>💬  你可以进行简单的配置，接入 <a href="https://github.com/gitalk/gitalk">Gitalk</a> 或 <a href="https://github.com/SukkaW/DisqusJS">DisqusJS</a> 评论系统</p>
-<p>🇬🇧  你可以使用<strong>中文简体</strong>或<strong>英语</strong></p>
-<p>🌁  你可以任意使用应用内默认主题或任意第三方主题，强大的主题自定义能力</p>
-<p>🖥  你可以自定义源文件夹，利用 OneDrive、百度网盘、iCloud、Dropbox 等进行多设备同步</p>
-<p>🌱 当然 <strong>Gridea</strong> 还很年轻，有很多不足，但请相信，它会不停向前 🏃</p>
-<p>未来，它一定会成为你离不开的伙伴</p>
-<p>尽情发挥你的才华吧！</p>
-<p>😘 Enjoy~</p>
-]]></content>
-    </entry>
-</feed>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E5%AF%BC%E8%AE%BA">导论</a></li>
+<li><a href="#%E8%9B%8B%E7%99%BD%E8%B4%A8%E6%8A%98%E5%8F%A0%E9%97%AE%E9%A2%98">蛋白质折叠问题</a></li>
+<li><a href="#casp14%E8%AF%84%E4%BC%B0%E7%BB%93%E6%9E%9C">CASP14评估结果</a></li>
+<li><a href="#deepmind%E8%A7%A3%E5%86%B3%E8%9B%8B%E7%99%BD%E8%B4%A8%E6%8A%98%E5%8F%A0%E9%97%AE%E9%A2%98%E7%9A%84%E6%96%B9%E6%B3%95">DeepMind解决蛋白质折叠问题的方法</a></li>
+<li><a href="#%E5%AF%B9%E7%8E%B0%E5%AE%9E%E4%B8%96%E7%95%8C%E7%9A%84%E6%BD%9C%E5%9C%A8%E5%BD%B1%E5%93%8D">对现实世界的潜在影响</a></li>
+<li><a href="#%E8%A7%A3%E9%94%81%E6%96%B0%E7%9A%84%E5%8F%AF%E8%83%BD%E6%80%A7">解锁新的可能性</a>
+<ul>
+<li><a href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5">参考链接</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://lony2612.github.io/post/hello-gridea/">
+              <h3 class="post-title">
+                Hello Gridea
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://lony2612.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
